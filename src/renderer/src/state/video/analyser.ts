@@ -2,7 +2,7 @@ import beepUrl from '../../assets/rec-beep.wav?url';
 import { TypedWorker } from '../../utils';
 import { type AnalyserWorkerApi, f1, f2, rmsSpls, srate } from './analyser.common';
 import workerUrl from './analyser.worker?worker&url';
-import workletUrl from './worklet?url';
+import workletUrl from './worklet?url&no-inline';
 
 const worker = new TypedWorker<AnalyserWorkerApi>(workerUrl);
 

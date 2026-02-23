@@ -20,8 +20,9 @@
 
 <div class="relative flex flex-col gap-2">
   <div
+    data-sortable-handle
     class={[
-      'relative aspect-9/16 w-52 bg-black/10',
+      'relative aspect-9/16 w-52 cursor-grab bg-black/10 select-none',
       'after:absolute after:top-0 after:left-0 after:size-full',
     ]}
   >

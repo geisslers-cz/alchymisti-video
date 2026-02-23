@@ -30,24 +30,29 @@ export async function getSavePath(
   return result.canceled ? undefined : result.filePath;
 }
 
+let currentRender: AbortController | undefined;
+
+ipcMain.on('render:abort', () => {
+  currentRender?.abort();
+});
+
 export async function render(
   win: WebContents,
   options: Omit<RenderOptions<string>, 'signal' | 'onprogress'>,
 ): Promise<RenderResult> {
-  const ctrl = new AbortController();
+  currentRender = new AbortController();
 
   try {
-    ipcMain.on('render:abort', abort);
-    return await ffmpeg.render({ ...options, onprogress, signal: ctrl.signal });
+    return await ffmpeg.render({ ...options, onprogress, signal: currentRender.signal });
   } finally {
-    ipcMain.off('render:abort', abort);
+    currentRender = undefined;
   }
 
-  function abort(): void {
-    ctrl.abort();
+  function onprogress(currentTime: number): void {
+    win.send('render:progress', currentTime);
   }
+}
 
-  function onprogress(progress: number, time: number): void {
-    win.send('render:progress', { progress, time });
-  }
+export function terminate(): void {
+  currentRender?.abort();
 }

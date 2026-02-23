@@ -8,9 +8,9 @@
 
 <script lang="ts">
   import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
-  import { SortableList, sortItems } from '@rodrigodagostino/svelte-sortable-list';
   import { usePlayer } from '../../state/video';
   import { Button } from '../button';
+  import { SortableItem, SortableList } from '../sortable';
   import AddFiles from './add-files.svelte';
   import Dropzone from './dropzone.svelte';
   import Video from './video.svelte';
@@ -20,16 +20,12 @@
   let { onready }: Props = $props();
   let items: VideoFile[] = $derived([...player.files]);
 
-  function ondragend({
-    isCanceled,
-    targetItemIndex: dstIdx,
-    draggedItemIndex: srcIdx,
-  }: SortableList.RootEvents['ondragend']): void {
-    if (isCanceled || typeof dstIdx !== 'number' || dstIdx === srcIdx) {
-      return;
-    }
+  function get(): VideoFile[] {
+    return [...player.files];
+  }
 
-    player.setOrder(sortItems(items, srcIdx, dstIdx));
+  function set(items: VideoFile[]): void {
+    player.setOrder(items);
   }
 </script>
 
@@ -38,24 +34,13 @@
 <div class="flex grow flex-col items-center gap-4 py-8">
   {#if player.files.size}
     <div class="flex flex-col gap-2">
-      <SortableList.Root
-        direction="horizontal"
-        canClearOnDragOut
-        {ondragend}
-        class="justify-start"
-        gap={8}
-      >
-        {#each items as file, index (file.id)}
-          <SortableList.Item
-            class="[[data-is-ghost=false]]:[[data-drag-state*='ptr-drag']]:opacity-0"
-            id={file.id}
-            {index}
-          >
+      <SortableList bind:items={get, set} class="grid grid-cols-5 gap-2">
+        {#each items as file (file.id)}
+          <SortableItem id={file.id}>
             <Video {file} />
-          </SortableList.Item>
+          </SortableItem>
         {/each}
-      </SortableList.Root>
-
+      </SortableList>
       <div class="grid grid-cols-5 gap-2">
         <div class="w-52 p-2 text-center text-2xl">Vladimír</div>
         <div class="w-52 p-2 text-center text-2xl">Radim</div>

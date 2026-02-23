@@ -36,8 +36,8 @@ const main: MainProcessApi = {
       ipcRenderer.off('render:progress', handleProgress);
     }
 
-    function handleProgress(_: IpcRendererEvent, info: { progress: number; time: number }): void {
-      onprogress?.(info.progress, info.time);
+    function handleProgress(_: IpcRendererEvent, currentTime: number): void {
+      onprogress?.(currentTime);
     }
   },
   abortRender(): void {

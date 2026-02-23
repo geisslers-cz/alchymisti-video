@@ -16,7 +16,7 @@ export type RenderOptions<Src> = {
   files: FileRenderOptions<Src>[];
   outputPath: string;
   duration: number;
-  onprogress?: (progress: number, time: number) => void;
+  onprogress?: (currentTime: number) => void;
 };
 
 export type RenderResult = {

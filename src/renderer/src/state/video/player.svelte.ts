@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import { SvelteSet } from 'svelte/reactivity';
 import type { RenderResult } from '../../../../common';
 import { awaited, type AwaitedState } from '../../utils';
@@ -15,10 +16,38 @@ type NowPlaying = {
 };
 
 export class RenderState {
-  public progress: number = $state(0);
-  public time: number = $state(0);
+  public currentTime: number = $state(0);
+  public readonly progress: number;
+  public readonly elapsed: number;
+  public readonly eta?: number;
 
-  constructor(private job: AwaitedState<RenderResult>) {}
+  private readonly startTime: number = Date.now() / 1000;
+  private now: number = $state(this.startTime);
+  private previousEta: number = Number.POSITIVE_INFINITY;
+
+  constructor(
+    public readonly duration: number,
+    private job: AwaitedState<RenderResult>,
+  ) {
+    this.progress = $derived(this.currentTime / this.duration);
+    this.elapsed = $derived(Math.floor(this.now - this.startTime));
+    this.eta = $derived.by(() => {
+      if (this.progress < 0.05) {
+        return undefined;
+      }
+
+      const eta = Math.round(untrack(() => this.elapsed / this.progress - this.elapsed));
+
+      if (eta >= this.previousEta) {
+        return this.previousEta;
+      }
+
+      this.previousEta = eta;
+      return eta;
+    });
+
+    this.update();
+  }
 
   get done(): boolean {
     return this.job.resolved;
@@ -35,6 +64,15 @@ export class RenderState {
   abort(): void {
     window.main.abortRender();
   }
+
+  private readonly update = (): void => {
+    if (this.done) {
+      return;
+    }
+
+    requestAnimationFrame(this.update);
+    this.now = Date.now() / 1000;
+  };
 }
 
 export class Player {
@@ -117,6 +155,7 @@ export class Player {
 
   render(outputPath: string): RenderState {
     const job = new RenderState(
+      this.renderEnd - this.renderStart,
       awaited(async () => {
         try {
           return await window.main.render({
@@ -127,9 +166,8 @@ export class Player {
             })),
             outputPath,
             duration: this.renderEnd - this.renderStart,
-            onprogress: (progress, time) => {
-              job.progress = progress;
-              job.time = time;
+            onprogress: (currentTime) => {
+              job.currentTime = currentTime;
             },
           });
         } catch (e: any) {

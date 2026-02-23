@@ -1,21 +1,11 @@
 <script module lang="ts">
   const tickStepDurations = [5, 10, 25, 50, 100, 250, 500, 1000, 2000, 5000, 10000, 30000, 60000];
   const tickCount = 10;
-
-  function formatTime(t: number, step: number = 1000): [string, string | undefined] {
-    const sgn = t < 0 ? '-' : '';
-    const m = Math.abs(Math.trunc(t / 60_000));
-    t = Math.abs(t) - m * 60_000;
-    const s = Math.floor(t / 1000);
-    const ms = t % 1000;
-    const int = `${sgn}${m}:${s.toString().padStart(2, '0')}`;
-
-    return step >= 1000 ? [int, undefined] : [int, ms.toString().padStart(3, '0')];
-  }
 </script>
 
 <script lang="ts">
   import { usePlayer } from '../../state/video';
+  import { formatTime } from '../../utils';
   import Marker from './marker.svelte';
   import { useView } from './provider.svelte';
 
@@ -58,10 +48,10 @@
       rulerCtx.lineTo(x, h);
       rulerCtx.stroke();
 
-      const [int, dec] = formatTime(t, step);
+      const [int, dec] = formatTime(t);
       rulerCtx.fillText(int, x + 5, 27);
 
-      if (dec !== undefined) {
+      if (step >= 1000) {
         const { width } = rulerCtx.measureText(int);
         rulerCtx.font = '14px sans-serif';
         rulerCtx.fillText('.' + dec, x + width + 6, 27);

@@ -3,7 +3,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'path';
 import icon from '../../resources/icon.png?asset';
 import { RenderOptions } from '../common';
-import { analyseFile, getSavePath, render } from './api';
+import { analyseFile, getSavePath, render, terminate } from './api';
 
 function createWindow(): void {
   // Create the browser window.
@@ -59,4 +59,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   app.quit();
+});
+
+app.on('quit', () => {
+  terminate();
 });

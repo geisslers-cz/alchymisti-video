@@ -102,7 +102,6 @@ export class Ffmpeg {
 
     for (const video of files) {
       cmd.addInput(video.file).seekInput(video.seek).addInputOption('-display_rotation', '0');
-      console.log(`${video.file.replace(/^.+\//, '')} ${video.seek}`);
     }
 
     const videoWidth = Math.floor((1920 - 4 * PADDING) / 5);
@@ -120,14 +119,14 @@ export class Ffmpeg {
       .map('[oa]');
 
     cmd.on('progress', (evt: FfmpegProgressEvent) => {
-      if (!aborted && typeof evt.percent === 'number' && !Number.isNaN(evt.percent)) {
-        onprogress?.(evt.percent / 100, this.parseTimemark(evt.timemark));
+      if (!aborted) {
+        onprogress?.(this.parseTimemark(evt.timemark));
       }
     });
 
     cmd.on('end', () => {
       signal?.removeEventListener('abort', abort);
-      onprogress?.(100, duration);
+      onprogress?.(duration);
       resolve({ success: true });
     });
 
@@ -203,6 +202,10 @@ export class Ffmpeg {
   }
 
   private parseTimemark(timemark: string): number {
+    if (!/^(\d+:)*\d+(\.\d+)?$/.test(timemark)) {
+      return 0;
+    }
+
     return timemark
       .split(/:/g)
       .map(parseFloat)
